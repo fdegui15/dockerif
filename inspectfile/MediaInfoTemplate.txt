@@ -1,0 +1,6 @@
+
+General;{"General": {\n    "Duration": "%Duration/String%",\n    "Format": "%Format%",\n    "Overall_Bit_Rate": "%OverallBitRate%",\n    "Overall_Bit_Rate_Mode": "%OverallBitRate_Mode%" },\n
+Video; "Video": {\n    "Format": "%Format% - %Format_Profile%",\n    "Dimension": "%Width%x%Height%",\n    "AspectRatio": "%DisplayAspectRatio/String%",\n    "BitRate": "%BitRate/String%" },\n
+Audio; "Audio": {\n    "Format": "%Format%",\n    "Language": "%Language/String%",\n    "Channel": "%Channel(s)%",\n    "Codec": "%Codec/String%",\n    "SamplingRate": "%SamplingRate/String%" }\n
+Text; "Text": {\n    "Language": "%Language/String%",\n    "Codec": "%Codec%" }\n
+File_End;}
