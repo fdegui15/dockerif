@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<!-- Use Bootstrap for the general layout
+     and filedrop.js to upload file(s) to the server
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Inspect file - Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="F. Deguilhen">
+
+    <!-- filedrop script et style -->
+    <script type="text/javascript" src="filedrop-min.js"></script>
+
+    <style type="text/css">
+    /***
+      Styles below are only required if you're using <iframe> fallback in
+      addition to HTML5 drag & drop (only working in Firefox/Chrome).
+     ***/
+
+    /* Essential FileDrop zone element configuration: */
+    .fd-zone {
+      position: relative;
+      overflow: hidden;
+      /* The following are not required but create a pretty box: */
+      width: 20em; 
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Hides <input type="file"> while simulating "Browse" button: */
+    .fd-file {
+      opacity: 0;
+      font-size: 118px;
+      position: absolute;
+      right: 0;
+      top: 10;
+      z-index: 3;/* 1 */
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      filter: alpha(opacity=0);
+      font-family: sans-serif;
+    }
+
+    /* Provides visible feedback when use drags a file over the drop zone: */
+    .fd-zone.over { border-color: maroon; background: #eee; }
+    </style>
+    <!-- Le styles  -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">  
+
+    <style type="text/css">
+      body {
+        padding-top: 40px;
+        padding-bottom: 40px;
+        background-color: white;
+      }
+
+      .div-block {
+        max-width: 300px;
+        padding: 19px 29px 29px;
+        margin: 0 auto 20px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        text-align: left;
+        -webkit-border-radius: 5px;
+           -moz-border-radius: 5px;
+                border-radius: 5px;
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+           -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      }
+      .div-block .div-block-heading,
+      .div-block .checkbox {
+        margin-bottom: 10px;
+      }
+      .div-block input[type="text"],
+      .div-block input[type="password"] {
+        font-size: 16px;
+        height: auto;
+        margin-bottom: 15px;
+        padding: 7px 9px;
+      }
+
+      #wrapper {
+        min-height: 100%; 
+        background-color: #f5f5f5;
+      }
+    </style>
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <!--
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+  -->
+    <link rel="shortcut icon" href="assets/ico/favicon.png">
+
+  </head>
+
+  <body>
+
+      <!-- Fixed navbar -->
+      <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+          <div class="container">
+            <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="brand" href="#">inspectFile</a>
+            <div class="nav-collapse collapse">
+              <ul class="nav">
+               <!-- <li class="active"><a href="#">Home</a></li> -->
+                <li><a href="javascript:insert_block(400,'About','This is a program to inspect files. Just drop a bunch of files in the center rectangle, or select them by clicking on the word \'Browse\' just above, to retrieve information from them... You can select the tools to use by pressing the buttons at the top of the screen.</p><p>Frederic Deguilhen (fdeguilhen@gmail.com)')">About</a></li>
+               <!-- <li><a href="#contact">Contact</a></li>  -->
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">More informations<b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="javascript:insert_block(400,'What is inspectFile','More informations soon!!')">What is inspectFile ?</a></li>
+                <!--  <li><a href="javascript:insert_block(400,'Contact me','If you want to contact me, just send me a email to <a href=\'mailto:fdeguihen@gmail.com\'>fdeguilhen@gmail.com</a>.</p><p>Looking forward to hearing from you.')">Contact me</a></li>
+                -->
+                    <li class="divider"></li>
+                    <li class="nav-header">More Options</li>
+                    <li><a href="javascript:launch_avupdate()">AntiVirus Update</a></li>
+                    <li><a href="javascript:launch_gettoolsvers()">Get Tools Version</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div><!--/.nav-collapse -->
+              <p>
+               <a href="javascript:activ_disabled('btn_hash')"><button type="button" id="btn_hash" class="btn active btn-default">Hash</button></a>
+               <a href="javascript:activ_disabled('btn_sf')"><button type="button" id="btn_sf" class="btn active btn-default">Siegfried</button></a>
+               <a href="javascript:activ_disabled('btn_fido')"><button type="button" id="btn_fido" class="btn btn-default">Fido</button></a>
+               <a href="javascript:activ_disabled('btn_et')"><button type="button" id="btn_et" class="btn btn-default">Exiftool</button></a>
+               <a href="javascript:activ_disabled('btn_mi')"><button type="button" id="btn_mi" class="btn btn-default">MediaInfo</button></a>
+               <a href="javascript:activ_disabled('btn_av')"><button type="button" id="btn_av" class="btn btn-default">AntiVirus</button></a>
+             </p>
+          </div>
+        </div>
+      </div>
+
+<div id="wrapper">
+<fieldset id="zone" style="min-height: 100%; min-width: 100%">
+<p>&nbsp;</p>
+
+
+
+
+
+
+
+    <!-- A FileDrop area. Can contain any text or elements, or be empty.
+         Can be of any HTML tag too, not necessary fieldset. -->
+    <div class="div-block" style="text-align: center;">
+      <h2 class="div-block-heading" >Inspect file</h2>
+      <fieldset id="zone" style="border: 2px groove"> 
+        <!--<legend style="font-size: 14px">Drop file here&hellip;</legend>-->
+        <p></p>
+        <p>
+          <form method="post" enctype="multipart/form-data" target="fd_4859" style="position: relative;">
+            <input type="hidden" name="fd-callback">
+            <input type="file" name="fd-file" class=" fd-file">
+          </form>
+          Drop file(s) here or click to <em>Browse...</em>
+        </p>
+
+        <!-- Putting another element on top of file input so it overlays it
+             and user can interact with it freely. -->
+        <p style="z-index: 10; position: relative">&nbsp;</p>
+        <p style="z-index: 10; position: relative">
+          Multiple selection allowed!
+        </p>
+      </fieldset> 
+    </div>
+    <div id="return">
+    <!-- will contain the data -->
+
+
+    </div>
+
+</fieldset>
+</div>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- filedrop script -->
+    <script>
+      function get_tools() {
+        //Retrieve the tools' button pressed
+        var res = ""
+        var nb = 0 
+        var tab = ["hash","sf","fido","et","mi","av"];
+        for (var x in tab) {
+          element = tab[x]
+          div = document.getElementById("btn_" + element);
+          if (div != null) {
+            if (div.className.indexOf("active") > 0) {
+              res = res + element + "-"
+              nb ++
+            } 
+          }          
+        }
+        if (nb>0) {
+          res = res.slice(0,-1)
+        }
+        return res;
+      }
+      function launch_gettoolsvers(){
+        //launch ajax to retrieve the tools version
+        $.ajax({
+        type:     "GET",
+        url:      "/cbgettoolsversion?callback=cb_gettoolsvers&tools=" + get_tools(),
+        dataType: "jsonp",
+        success: function(data){
+           //alert(data);
+        }
+        });
+        //$.getJSON("http://192.168.56.102:5138/gettoolsversion?callback=cb_gettoolsvers");
+      }
+      function cb_gettoolsvers(data){
+        //callback function for gettoolsversion
+        insert_block(800,"Get tools version","<PRE>" + JSON.stringify(data, undefined,2) + "</PRE>");
+      }
+      function launch_avupdate(){
+        //launch ajax to retrieve the result of the antivirus update
+        $.ajax({
+        type:     "GET",
+        url:      "/cbavupdate?callback=cb_avupdate&tools=" + get_tools(),
+        dataType: "jsonp"
+        });
+        alert("AntiVirus update launched. This operation can last several minutes...")
+      }
+      function cb_avupdate(data){
+        //callback function fo avupdate
+        insert_block(800,"AntiVirus update","<PRE>" + JSON.stringify(data,undefined,2) + "</PRE>")
+      }
+    </script>
+    <!-- bootstrap script == FD TOO MUCH IN THERE !!-->
+    <script src="assets/js/jquery.js"></script> 
+   <!-- <script src="assets/js/bootstrap.min.js"></script> -->
+    <script src="assets/js/bootstrap-transition.js"></script>
+    <script src="assets/js/bootstrap-alert.js"></script>
+    <script src="assets/js/bootstrap-modal.js"></script>
+    <script src="assets/js/bootstrap-dropdown.js"></script>
+    <script src="assets/js/bootstrap-scrollspy.js"></script>
+    <script src="assets/js/bootstrap-tab.js"></script>
+    <script src="assets/js/bootstrap-tooltip.js"></script>
+    <script src="assets/js/bootstrap-popover.js"></script>
+    <script src="assets/js/bootstrap-button.js"></script>
+    <script src="assets/js/bootstrap-collapse.js"></script>
+    <script src="assets/js/bootstrap-carousel.js"></script>
+    <script src="assets/js/bootstrap-typeahead.js"></script>
+    <!-- filedrop script -->
+       <script type="text/javascript">
+      // Tell FileDrop we can deal with iframe uploads using this URL:
+      var options = {iframe: {url: '/inspect?tools=' + get_tools()}};
+      // Attach FileDrop to an area ('zone' is an ID but you can also give a DOM node):
+      var zone = new FileDrop('zone', options);
+      var nb_return = 0;
+
+      // Do something when a user chooses or drops a file:
+      zone.event('send', function (files) {
+        // Depending on browser support files (FileList) might contain multiple items.
+        files.each(function (file) {
+          // React on successful AJAX upload:
+          file.event('done', function (xhr) {
+            insert_block(600, this.name,"<pre>" + xhr.responseText + "</pre>");
+          });
+
+          file.event('error', function (xhr) {
+            // 'this' here points to fd.File instance that has triggered the event.
+            alert('Error uploading ' + this.name + ', response:\n\n' + xhr.Error);
+            insert_block(400,this.name,"Error in uploading.")
+          });
+
+          // Send the file:
+          file.sendTo('/inspect?tools=' + get_tools());
+        });
+      });
+
+      // React on successful iframe fallback upload (this is separate mechanism
+      // from proper AJAX upload hence another handler):
+      zone.event('iframeDone', function (xhr) {
+        alert('Done uploading via <iframe>, response:\n\n' + xhr.responseText);
+      });
+
+      // A bit of sugar - toggling multiple selection:
+      fd.addEvent(fd.byID('multiple'), 'change', function (e) {
+        zone.multiple(e.currentTarget || e.srcElement.checked);
+      });
+      </script>
+
+      <script>
+      //function to manage the blocks
+      function remove_div(number) {
+        var div = document.getElementById("return_upload_" + number.toString());
+        if (div != null) {
+          div.parentNode.removeChild(div) 
+          if (nb_return == (number + 1)) {
+            nb_return = number
+            //We need to update nb_return with the highest return_upload_xx on the screen.
+            while ((document.getElementById("return_upload_" + nb_return.toString()) == null) && (nb_return > 0)) {
+              nb_return --;
+            }
+            nb_return ++;
+          } 
+        }
+      }
+      function activ_disabled(btn_name) {
+        //Used to toggle the top buttons
+        var div = document.getElementById(btn_name);
+        if (div != null) {
+          //alert("debug: " + div.className);
+          if (div.className == "btn btn-default") {
+            div.className = "btn active btn-default" ;
+          } else {
+            div.className = "btn btn-default" ;
+          }
+          
+        } else {
+          alert("No Element: " + btn_name);
+        }
+      }
+      function insert_block(maxwidth, title, txt) {
+            var div = document.createElement("div");
+            div.className = "div-block";
+            div.setAttribute("id","return_upload_" + nb_return.toString());
+            div.setAttribute("style","max-width: " + maxwidth + "px; ");
+            div.innerHTML = "<div style='text-align:right; font-size:12px;'><a href='javascript:remove_div(" + nb_return + ")' style='color:black;'>Click here to remove<img src='cross.png' alt='click to remove'></a></div><h2 class = 'div-block-heading' style='text-align:center;'>" + title + "</h2><p>" + txt + "</p>";
+            var element = document.getElementById('return');
+            if (nb_return > 0) {
+              num_prec = nb_return - 1;
+              var child = document.getElementById("return_upload_" + num_prec.toString());
+              element.insertBefore(div,child)
+            } else {
+              element.appendChild(div);
+            }
+            nb_return ++;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+Output: {
+    "FileExists": true,
+    "FileName": "/media/sf_Temp/jeux-de-test/audio/02-Avril_Lavigne-Let_Go-Complicated.mp3",
+    "FileNotNull": true,
+    "FileShortName": "02-Avril_Lavigne-Let_Go-Complicated.mp3",
+    "FileSize": 5.899786e+06,
+    "antivirus": {
+        "Error": "/media/sf_Temp/jeux-de-test/audio/02-Avril_Lavigne-Let_Go-Complicated.mp3: lstat() failed: Permission denied. ERROR",
+        "Passed": false
+    },
+    "fido": {
+        "formatname": "MPEG 1/2 Audio Layer 3 - fido update",
+        "matchtype": "signature",
+        "mimetype": "audio/mpeg",
+        "passed": true,
+        "puid": "fmt/134",
+        "signaturename": "MPEG-1/2 Audio Layer 3"
+    },
+    "hash": {
+        "Md5": "9c8be3cb37fa6cd54f14e9a02e2e61cb27f31da68eb8e0a68ad7a203532cd4b79d22214e1fa81f2778f952d9666d3d53e4538a13258acf37e3b09e73da1d5008",
+        "Sha512": "343b27117e4efdc0899e503f9a8e247e"
+    },
+    "mediainfo": {
+        "Audio": {
+            "Channel": "2",
+            "Codec": "MPEG-1 Audio layer 3",
+            "Format": "MPEG Audio",
+            "Language": "",
+            "SamplingRate": "44.1 KHz"
+        },
+        "General": {
+            "Duration": "4mn 5s",
+            "Format": "MPEG Audio",
+            "Overall_Bit_Rate": "192000",
+            "Overall_Bit_Rate_Mode": "CBR"
+        }
+    },
+    "siegfried": {
+        "NbMatches": 1,
+        "basis": "extension match; byte match at [[[0 3]] [[5896524 2521] [5896524 2522] [5896524 2523] [5896524 2524] [5896524 2529] [5896524 2530] [5896524 2531] [5896524 2536] [5896524 2537] [5896524 2538] [5896524 2539] [5896524 2544]]] (signature 1/8)",
+        "format": "MPEG 1/2 Audio Layer 3",
+        "id": "pronom",
+        "mime": "audio/mpeg",
+        "puid": "fmt/134",
+        "version": "",
+        "warning": ""
+    }
+}{
+    "FileExists": true,
+    "FileName": "/media/sf_Temp/jeux-de-test/audio/betterave.wav",
+    "FileNotNull": true,
+    "FileShortName": "betterave.wav",
+    "FileSize": 136296,
+    "antivirus": {
+        "Error": "/media/sf_Temp/jeux-de-test/audio/betterave.wav: lstat() failed: Permission denied. ERROR",
+        "Passed": false
+    },
+    "fido": {
+        "formatname": "Waveform Audio (PCMWAVEFORMAT)",
+        "matchtype": "signature",
+        "mimetype": "audio/x-wav",
+        "passed": true,
+        "puid": "fmt/141",
+        "signaturename": "Waveform Audio (PCMWAVEFORMAT)"
+    },
+    "hash": {
+        "Md5": "0e0c1b45e637b5537e83fe2e998a4afd3797648795f1601ace39753d1d979742de47744dd1c516fc72c6cbaa720e32d61ddfa68aa6e6818135ccb834a7e2bfda",
+        "Sha512": "d0d7520c7cd1b097b08e14aa981abec0"
+    },
+    "mediainfo": {
+        "Audio": {
+            "Channel": "1",
+            "Codec": "PCM",
+            "Format": "PCM",
+            "Language": "",
+            "SamplingRate": "22.05 KHz"
+        },
+        "General": {
+            "Duration": "6s 175ms",
+            "Format": "Wave",
+            "Overall_Bit_Rate": "176578",
+            "Overall_Bit_Rate_Mode": "CBR"
+        }
+    },
+    "siegfried": {
+        "NbMatches": 1,
+        "basis": "extension match; extension match; byte match at 0, 40",
+        "format": "Waveform Audio (PCMWAVEFORMAT)",
+        "id": "pronom",
+        "mime": "audio/x-wav",
+        "puid": "fmt/141",
+        "version": "",
+        "warning": "extension mismatch"
+    }
+} 
+ToolsVersion:  {
+    "antivirus": "ClamAV 0.98.7/20930/Mon Sep 21 18:36:37 2015",
+    "fido": "FIDO v1.3.1 (formats-v82.xml, container-signature-20130501.xml, format_extensions.xml)",
+    "hash": "go library : crypto/md5 \u0026 crypto/sha512",
+    "mediainfo": "MediaInfo Command line, \nMediaInfoLib - v0.7.70",
+    "siegfried": "siegfried 1.3.0\n/home/docker/siegfried/pronom.sig (2015-09-19T19:08:03+10:00)\nidentifiers: \n  - pronom: DROID_SignatureFile_V82.xml; container-signature-20150327.xml"
+}
+Took 958.28804ms to run.
