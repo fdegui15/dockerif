@@ -3,12 +3,81 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 )
+
+//Constant MAXProcess can be implemented in Dockerfile !!
+var MAXProcess int = 2
+
+//NbActivProcess
+var NbActivProcess int = 0
+
+// Management of Process
+type ProcUnit struct {
+	Name      string
+	FileName  string
+	BeginTime time.Time
+	EndTime   time.Time
+	Activ     bool
+}
+
+//List of Processes
+var ListProc []ProcUnit
+
+func msgWithDateProc(NProc int, msg string) string {
+	//Display the msg with the date in front (Logs type)
+	t := time.Now()
+	return t.Local().String() + " Proc#" + strconv.Itoa(NProc) + ": " + msg
+}
+
+func AddNewProc(procname, fn string) (int, error) {
+	// Try to add a new process
+	// if NbActivProcess < MAXProcess create a new Procunit AND return its id AND NbActivProcess ++
+	// if NbAdtivProcess >= MAXProcess return ERROR
+	if NbActivProcess < MAXProcess {
+		/*
+			if !(LastProcess > 0) {
+				LastProcess = 0
+			}
+			if !(NbActivProcess > 0) {
+				NbActivProcess = 0
+			}
+		*/
+		NbActivProcess++
+		var cpu ProcUnit
+		cpu.Activ = true
+		cpu.BeginTime = time.Now()
+		cpu.Name = procname
+		cpu.FileName = fn
+		ListProc = append(ListProc, cpu)
+		curProc := len(ListProc) - 1
+		fmt.Println(msgWithDate("AddNewProcess: " + procname + " create process #" + strconv.Itoa(curProc) + ". NbActivProcess = " + strconv.Itoa(NbActivProcess)))
+		return curProc, nil
+	} else {
+		fmt.Println(msgWithDate("AddNewProcess: Nb Maximum of Process reached : " + procname + "can't create new process!"))
+		return -1, errors.New("Nb Maximum of Process reached!")
+	}
+}
+
+func EndProc(id int) {
+	if ListProc[id].Activ {
+		ListProc[id].EndTime = time.Now()
+		ListProc[id].Activ = false
+		//ListProc[id].EndTime = time.Now()
+		//ListProc[id].Activ = false
+		NbActivProcess--
+		fmt.Println(msgWithDateProc(id, "EndProc: The Process "+strconv.Itoa(id)+" is ended. NbActivProcess = "+strconv.Itoa(NbActivProcess)))
+	} else {
+		fmt.Println(msgWithDateProc(id, "EndProc: The Process "+strconv.Itoa(id)+" is already ended !"))
+	}
+}
 
 func handleErr(w http.ResponseWriter, status int, e error) {
 	w.WriteHeader(status)
@@ -20,10 +89,16 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//Upload a file, Copy in the /tmp directory, Inspect the file and Remove the file
 		mime := "application/json"
+		NProc, err := AddNewProc("httpinspect", "Which one ?")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		tools := r.URL.Query().Get("tools")
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpinspect launched."))
-		fmt.Println(msgWithDate("URL String: " + r.URL.String() + " & tools" + tools))
+		fmt.Println(msgWithDateProc(NProc, "httpinspect launched."))
+		fmt.Println(msgWithDateProc(NProc, "URL String: "+r.URL.String()+" & tools"+tools))
 		initTools(tools)
 		initToolsVersion()
 
@@ -32,22 +107,25 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") == "application/octet-stream" {
 			//used by filedrop.js
 			//the size of the file is limited to 2 GB (not tested yet !)
-			fn = r.Header.Get("X-File-Name") //get the filename
+			fn = r.Header.Get("X-File-Name") //getbootstrap the filename
+			ListProc[NProc].FileName = fn
 			fmt.Printf("Size of data to read = %d (%s)\n", r.ContentLength, r.Header.Get("X-File-Size"))
 			data := make([]byte, r.ContentLength) //get the data upload in memory
-			fmt.Println(msgWithDate("Trying to read the data !!"))
+			fmt.Println(msgWithDateProc(NProc, "Trying to read the data !!"))
 			data, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "ERROR in reading the data: "+err.Error(), http.StatusBadRequest)
-				fmt.Println(msgWithDate("ReadAll Error = " + err.Error()))
+				fmt.Println(msgWithDateProc(NProc, "ReadAll Error = "+err.Error()))
+				EndProc(NProc)
 				return
 			} else {
-				fmt.Println(msgWithDate("The data is correctly read"))
+				fmt.Println(msgWithDateProc(NProc, "The data is correctly read"))
 			}
 			err = ioutil.WriteFile("/tmp/"+fn, data, 0644) //
 			if err != nil {
 				http.Error(w, "ERROR creating file in /tmp/: "+err.Error(), http.StatusBadRequest)
-				fmt.Println(msgWithDate("ERROR creating file /tmp/" + fn))
+				fmt.Println(msgWithDateProc(NProc, "ERROR creating file /tmp/"+fn))
+				EndProc(NProc)
 				return
 			}
 			output = inspectfile("/tmp/"+fn, nil)
@@ -59,19 +137,22 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 			fn = header.Filename
 			if err != nil {
 				http.Error(w, "ERROR parsing uploaded file: "+err.Error(), http.StatusBadRequest)
-				fmt.Println(msgWithDate("ERROR parsing uploaded file: " + err.Error()))
+				fmt.Println(msgWithDateProc(NProc, "ERROR parsing uploaded file: "+err.Error()))
+				EndProc(NProc)
 				return
 			}
 			outfile, err := os.Create("/tmp/" + fn)
 			if err != nil {
 				http.Error(w, "ERROR creating file: "+err.Error(), http.StatusBadRequest)
-				fmt.Println(msgWithDate("ERROR creating file: " + err.Error()))
+				fmt.Println(msgWithDateProc(NProc, "ERROR creating file: "+err.Error()))
+				EndProc(NProc)
 				return
 			}
 			_, err = io.Copy(outfile, infile)
 			if err != nil {
 				http.Error(w, "ERROR saving file: "+err.Error(), http.StatusBadRequest)
-				fmt.Println(msgWithDate("ERROR saving file: " + err.Error()))
+				fmt.Println(msgWithDateProc(NProc, "ERROR saving file: "+err.Error()))
+				EndProc(NProc)
 				return
 			}
 			output = inspectfile(outfile.Name(), nil)
@@ -80,13 +161,15 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mime)
 		w.Write(output)
 
-		err := os.Remove("/tmp/" + fn)
-		if err != nil {
+		err2 := os.Remove("/tmp/" + fn)
+		if err2 != nil {
 			http.Error(w, "ERROR removing file: "+err.Error(), http.StatusBadRequest)
-			fmt.Println(msgWithDate("ERROR removing file: " + err.Error()))
+			fmt.Println(msgWithDateProc(NProc, "ERROR removing file: "+err.Error()))
+			EndProc(NProc)
 			return
 		}
-		fmt.Println(msgWithDate("httpinspect done."))
+		fmt.Println(msgWithDateProc(NProc, "httpinspect done."))
+		EndProc(NProc)
 		fmt.Println("*****************************************")
 		return
 	}
@@ -97,26 +180,35 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 		//inspect a path
 		//THe path used the Environment variable %MOUNTDIR%
 		mime := "application/json"
+		NProc, err := AddNewProc("httpinspectpath", "")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		tools := r.URL.Query().Get("tools")
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpinspectpath launched."))
-		fmt.Println(msgWithDate("URL String: " + r.URL.String() + " & tools" + tools))
+		fmt.Println(msgWithDateProc(NProc, "httpinspectpath launched."))
+		fmt.Println(msgWithDateProc(NProc, "URL String: "+r.URL.String()+" & tools"+tools))
 		initTools(tools)
 		initToolsVersion()
 
 		path := r.URL.Path
-		fmt.Println(msgWithDate("GET Path: " + path))
+		fmt.Println(msgWithDateProc(NProc, "GET Path: "+path))
 		if len(path) < 10 {
 			http.Error(w, "You need to pass the filename or directory path after /inspect !!!", http.StatusBadRequest)
-			fmt.Println(msgWithDate("httpinspectpath: ERROR no directory path after /inspect"))
+			fmt.Println(msgWithDateProc(NProc, "httpinspectpath: ERROR no directory path after /inspect"))
+			EndProc(NProc)
 			return
 		} else {
 			path = os.Getenv("MOUNTDIR") + path[len("/inspectpath"):]
+			ListProc[NProc].FileName = "Path= " + path
 		}
 		info, err := os.Stat(path)
 		if err != nil {
 			handleErr(w, http.StatusNotFound, err)
-			fmt.Println(msgWithDate("httpinspectpath: ERROR in getting inforamtion from path" + err.Error()))
+			fmt.Println(msgWithDateProc(NProc, "httpinspectpath: ERROR in getting inforamtion from path"+err.Error()))
+			EndProc(NProc)
 			return
 		}
 		w.Header().Set("Content-Type", mime)
@@ -128,8 +220,9 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write(output)
-		fmt.Println(msgWithDate("httpinspect PATH done."))
+		fmt.Println(msgWithDateProc(NProc, "httpinspect PATH done."))
 		fmt.Println("*****************************************")
+		EndProc(NProc)
 		return
 
 	}
@@ -166,12 +259,19 @@ func httplocalinspect() func(w http.ResponseWriter, r *http.Request) {
 func httpavupdate() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//output := []byte("AV update - TO DO...")
+		NProc, err := AddNewProc("httpavupdate", "")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpAVUpdate launched."))
+		fmt.Println(msgWithDateProc(NProc, "httpAVUpdate launched."))
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(launchAVUpdate())
-		fmt.Println(msgWithDate("httpAVUpdate done."))
+		fmt.Println(msgWithDateProc(NProc, "httpAVUpdate done."))
 		fmt.Println("*****************************************")
+		EndProc(NProc)
 		return
 	}
 }
@@ -180,17 +280,24 @@ func httpcbavupdate() func(w http.ResponseWriter, r *http.Request) {
 	//callback version of httpavupdate
 	return func(w http.ResponseWriter, r *http.Request) {
 		//output := []byte("AV update - TO DO...")
+		NProc, err := AddNewProc("httpcbavupdate", "")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpcbAVUpdate launched."))
+		fmt.Println(msgWithDateProc(NProc, "httpcbAVUpdate launched."))
 		cbfunc := r.URL.Query().Get("callback")
-		fmt.Println(msgWithDate("httpcbAVUpdate = callback: " + cbfunc))
+		fmt.Println(msgWithDateProc(NProc, "httpcbAVUpdate = callback: "+cbfunc))
 		w.Header().Set("Content-Type", "application/json")
 		str := cbfunc + "(" + string(launchAVUpdate()) + ");"
 		arr := []byte(str)
 		w.Write(arr)
 		//w.Write(launchAVUpdate())
-		fmt.Println(msgWithDate("httpcbAVUpdate done."))
+		fmt.Println(msgWithDateProc(NProc, "httpcbAVUpdate done."))
 		fmt.Println("*****************************************")
+		EndProc(NProc)
 		return
 	}
 }
@@ -198,16 +305,23 @@ func httpcbavupdate() func(w http.ResponseWriter, r *http.Request) {
 func httpgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//output := []byte("Tools version - TO DO...")
+		NProc, err := AddNewProc("httpgettoolsversion", "")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpgettoolsversion launched"))
+		fmt.Println(msgWithDateProc(NProc, "httpgettoolsversion launched"))
 		tools := r.URL.Query().Get("tools")
-		fmt.Println(msgWithDate("httpgettoolsversion = tools:" + tools))
+		fmt.Println(msgWithDateProc(NProc, "httpgettoolsversion = tools:"+tools))
 		initTools(tools)
 		//initToolsVersion()
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ExportToolsVersion())
-		fmt.Println(msgWithDate("httpgettoolsversion done"))
+		fmt.Println(msgWithDateProc(NProc, "httpgettoolsversion done"))
 		fmt.Println("*****************************************")
+		EndProc(NProc)
 		return
 	}
 }
@@ -215,20 +329,26 @@ func httpgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 func httpcbgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 	//callback version of httpgettoolsversion
 	return func(w http.ResponseWriter, r *http.Request) {
-		//output := []byte("Tools version - TO DO...")
+		NProc, err := AddNewProc("httpcbgettoolsversion", "")
+		if err != nil {
+			fmt.Println(msgWithDate(err.Error()))
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		fmt.Println("*****************************************")
-		fmt.Println(msgWithDate("httpcbgettoolsversion launched"))
+		fmt.Println(msgWithDateProc(NProc, "httpcbgettoolsversion launched"))
 		tools := r.URL.Query().Get("tools")
 		cbfunc := r.URL.Query().Get("callback")
-		fmt.Println(msgWithDate("httpcbgettoolsversion = tools:" + tools + " callback: " + cbfunc))
+		fmt.Println(msgWithDateProc(NProc, "httpcbgettoolsversion = tools:"+tools+" callback: "+cbfunc))
 		initTools(tools)
 		//initToolsVersion()
 		w.Header().Set("Content-Type", "application/json")
 		str := cbfunc + "(" + string(ExportToolsVersion()) + ");"
 		arr := []byte(str)
 		w.Write(arr)
-		fmt.Println(msgWithDate("httpcbgettoolsversion done"))
+		fmt.Println(msgWithDateProc(NProc, "httpcbgettoolsversion done"))
 		fmt.Println("*****************************************")
+		EndProc(NProc)
 		return
 	}
 }
