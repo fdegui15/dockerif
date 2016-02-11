@@ -27,6 +27,7 @@ RUN sed -i "s|User clamav|User root|" /etc/clamav/clamd.conf
 # RUN apt-get install -y python
 RUN mkdir /home/fido
 ADD fido /home/fido
+RUN chmod +x /home/fido/fido.py
 
 # Installation of mediainfo & exiftool
 # RUN apt-get install -y mediainfo exiftool
