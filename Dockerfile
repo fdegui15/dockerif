@@ -5,27 +5,31 @@ ENV PATH $PATH:/home/go/bin
 ENV GOPATH /home/go
 ENV MOUNTDIR /opt/dv
 
-RUN apt-get update
+# All the installation here
+# Reducing the image size with --no-install-recommends and rm /var/lib/apt/lists
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends ca-certificates golang git clamav clamav-daemon python mediainfo exiftool && \
+	rm -rf /var/lib/apt/lists
 
 # Installation of siegfried 
-RUN apt-get install -y golang git
+# RUN apt-get install -y golang git
 RUN mkdir /home/go ;\
 	go get github.com/richardlehane/siegfried/cmd/sf ;\
 	sf -update 
 
 # Installation of ClamAV
-RUN apt-get install -y clamav clamav-daemon
+# RUN apt-get install -y clamav clamav-daemon
 RUN freshclam
 RUN sed -i "s|/var/run/clamav/clamd.ctl|/tmp/clamd.ctl|" /etc/clamav/clamd.conf
 RUN sed -i "s|User clamav|User root|" /etc/clamav/clamd.conf
 
 # Installation of Fido
-RUN apt-get install -y python
+# RUN apt-get install -y python
 RUN mkdir /home/fido
 ADD fido /home/fido
 
 # Installation of mediainfo & exiftool
-RUN apt-get install -y mediainfo exiftool
+# RUN apt-get install -y mediainfo exiftool
 RUN locale-gen fr_FR.UTF-8
 
 # Add and Compile code inspectFile
@@ -50,7 +54,7 @@ CMD ["inspectFile","--server","0.0.0.0:8080"]
 
 # To inspect a file "curl localhost:8080/inspect -F file=@/path/and/file"
 # To inspect a local file "curl localhost:8080/localinspect\&file=/path/to/file" /path/to/file is relative to /media/sf_Temp in the host !!
-# To inspect all the files in a directory "curl localhost:8080/inspectpath/opt/dv/path/to/treat"
+# To inspect all the files in a directory "curl localhost:8080/inspectpath/opt/dv/path/to/inspect"
 # You can also launch it in your browser if you don't upload the file !!
 
 # To update the virus database, "curl localhost:8080/avupdate"

@@ -14,7 +14,7 @@ import (
 )
 
 //Constant MAXProcess can be implemented in Dockerfile !!
-var MAXProcess int = 2
+var MAXProcess int = 10
 
 //NbActivProcess
 var NbActivProcess int = 0
@@ -95,6 +95,7 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process at the end of the function!
 		tools := r.URL.Query().Get("tools")
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpinspect launched."))
@@ -116,7 +117,7 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				http.Error(w, "ERROR in reading the data: "+err.Error(), http.StatusBadRequest)
 				fmt.Println(msgWithDateProc(NProc, "ReadAll Error = "+err.Error()))
-				EndProc(NProc)
+				//EndProc(NProc)
 				return
 			} else {
 				fmt.Println(msgWithDateProc(NProc, "The data is correctly read"))
@@ -125,7 +126,7 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				http.Error(w, "ERROR creating file in /tmp/: "+err.Error(), http.StatusBadRequest)
 				fmt.Println(msgWithDateProc(NProc, "ERROR creating file /tmp/"+fn))
-				EndProc(NProc)
+				//EndProc(NProc)
 				return
 			}
 			output = inspectfile("/tmp/"+fn, nil)
@@ -138,21 +139,21 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				http.Error(w, "ERROR parsing uploaded file: "+err.Error(), http.StatusBadRequest)
 				fmt.Println(msgWithDateProc(NProc, "ERROR parsing uploaded file: "+err.Error()))
-				EndProc(NProc)
+				//EndProc(NProc)
 				return
 			}
 			outfile, err := os.Create("/tmp/" + fn)
 			if err != nil {
 				http.Error(w, "ERROR creating file: "+err.Error(), http.StatusBadRequest)
 				fmt.Println(msgWithDateProc(NProc, "ERROR creating file: "+err.Error()))
-				EndProc(NProc)
+				//EndProc(NProc)
 				return
 			}
 			_, err = io.Copy(outfile, infile)
 			if err != nil {
 				http.Error(w, "ERROR saving file: "+err.Error(), http.StatusBadRequest)
 				fmt.Println(msgWithDateProc(NProc, "ERROR saving file: "+err.Error()))
-				EndProc(NProc)
+				//EndProc(NProc)
 				return
 			}
 			output = inspectfile(outfile.Name(), nil)
@@ -165,11 +166,11 @@ func httpinspect() func(w http.ResponseWriter, r *http.Request) {
 		if err2 != nil {
 			http.Error(w, "ERROR removing file: "+err.Error(), http.StatusBadRequest)
 			fmt.Println(msgWithDateProc(NProc, "ERROR removing file: "+err.Error()))
-			EndProc(NProc)
+			//EndProc(NProc)
 			return
 		}
 		fmt.Println(msgWithDateProc(NProc, "httpinspect done."))
-		EndProc(NProc)
+		//EndProc(NProc)
 		fmt.Println("*****************************************")
 		return
 	}
@@ -186,6 +187,7 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process when leaving this function!
 		tools := r.URL.Query().Get("tools")
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpinspectpath launched."))
@@ -198,7 +200,7 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 		if len(path) < 10 {
 			http.Error(w, "You need to pass the filename or directory path after /inspect !!!", http.StatusBadRequest)
 			fmt.Println(msgWithDateProc(NProc, "httpinspectpath: ERROR no directory path after /inspect"))
-			EndProc(NProc)
+			//EndProc(NProc)
 			return
 		} else {
 			path = os.Getenv("MOUNTDIR") + path[len("/inspectpath"):]
@@ -208,7 +210,7 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			handleErr(w, http.StatusNotFound, err)
 			fmt.Println(msgWithDateProc(NProc, "httpinspectpath: ERROR in getting inforamtion from path"+err.Error()))
-			EndProc(NProc)
+			//EndProc(NProc)
 			return
 		}
 		w.Header().Set("Content-Type", mime)
@@ -222,7 +224,7 @@ func httpinspectpath() func(w http.ResponseWriter, r *http.Request) {
 		w.Write(output)
 		fmt.Println(msgWithDateProc(NProc, "httpinspect PATH done."))
 		fmt.Println("*****************************************")
-		EndProc(NProc)
+		//EndProc(NProc)
 		return
 
 	}
@@ -265,13 +267,14 @@ func httpavupdate() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process when leaving this function!
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpAVUpdate launched."))
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(launchAVUpdate())
 		fmt.Println(msgWithDateProc(NProc, "httpAVUpdate done."))
 		fmt.Println("*****************************************")
-		EndProc(NProc)
+		//EndProc(NProc)
 		return
 	}
 }
@@ -286,6 +289,7 @@ func httpcbavupdate() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process when leaving this function!
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpcbAVUpdate launched."))
 		cbfunc := r.URL.Query().Get("callback")
@@ -297,7 +301,7 @@ func httpcbavupdate() func(w http.ResponseWriter, r *http.Request) {
 		//w.Write(launchAVUpdate())
 		fmt.Println(msgWithDateProc(NProc, "httpcbAVUpdate done."))
 		fmt.Println("*****************************************")
-		EndProc(NProc)
+		//EndProc(NProc)
 		return
 	}
 }
@@ -311,6 +315,7 @@ func httpgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process when leaving this function!
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpgettoolsversion launched"))
 		tools := r.URL.Query().Get("tools")
@@ -321,7 +326,7 @@ func httpgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 		w.Write(ExportToolsVersion())
 		fmt.Println(msgWithDateProc(NProc, "httpgettoolsversion done"))
 		fmt.Println("*****************************************")
-		EndProc(NProc)
+		//EndProc(NProc)
 		return
 	}
 }
@@ -335,6 +340,7 @@ func httpcbgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		defer EndProc(NProc) //We must End the process when leaving this function!
 		fmt.Println("*****************************************")
 		fmt.Println(msgWithDateProc(NProc, "httpcbgettoolsversion launched"))
 		tools := r.URL.Query().Get("tools")
@@ -348,7 +354,7 @@ func httpcbgettoolsversion() func(w http.ResponseWriter, r *http.Request) {
 		w.Write(arr)
 		fmt.Println(msgWithDateProc(NProc, "httpcbgettoolsversion done"))
 		fmt.Println("*****************************************")
-		EndProc(NProc)
+		//EndProc(NProc)
 		return
 	}
 }
